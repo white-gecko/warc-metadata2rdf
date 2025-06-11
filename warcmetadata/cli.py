@@ -1,4 +1,5 @@
 import click
+import importlib.resources
 from warcio.archiveiterator import ArchiveIterator
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDF, RDFS, XSD
@@ -9,17 +10,17 @@ DOWARC = Namespace("https://github.com/DOWARC/dowarc#")
 ORE = Namespace("http://www.openarchives.org/ore/terms/")
 
 
-def load_dowarc_mapping(path_to_owl="warcmetadata/vocab/dowarc.owl"):
+def load_dowarc_mapping():
     """
     Load RDF vocabulary and map WARC header labels to ontology URIs.
     """
-    g = Graph()
-    g.parse(path_to_owl)
-
     mapping = {}
-    for s, p, o in g.triples((None, RDFS.label, None)):
-        if isinstance(o, str) and "WARC-" in o:
-            mapping[o.strip()] = s
+    with importlib.resources.path(__name__, "../vocab/dowarc.owl") as data_path:
+        g = Graph().parse(data_path)
+
+        for s, p, o in g.triples((None, RDFS.label, None)):
+            if isinstance(o, str) and "WARC-" in o:
+                mapping[o.strip()] = s
     return mapping
 
 
