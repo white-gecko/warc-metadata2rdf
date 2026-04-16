@@ -158,27 +158,29 @@ def extract_metadata_simple(warc_file_stream, warc_path):
 
         record_uri = safe_uri_or_bnode(record_id)
         graph.add((file_uri, DCTERMS.relation, record_uri))
-        graph.add((record_uri, RDF.type, DOWARC.Record))
+        graph.add((record_uri, RDF.type, DOWARC.WARCrecord))
 
         for key, value in record.rec_headers.headers:
             if key in mapping:
                 prop_uri = mapping[key]
-                val_node = safe_uri_or_bnode(value)
-                label_str = f"{record_id}_{key}"
-
-                graph.add((val_node, RDF.type, prop_uri))
-                graph.add((val_node, RDFS.label, Literal(label_str, lang="en")))
 
                 # Type inference
                 if "Date" in key:
                     lit = Literal(value, datatype=XSD.dateTime)
                 elif "Length" in key:
                     lit = Literal(value, datatype=XSD.integer)
-                else:
+                elif "IP-Address" in key:
                     lit = Literal(value)
+                elif "Target-URI" in key:
+                    lit = URIRef(value)
+                else:
+                    logger.debug(value)
+                    try:
+                        lit = from_n3(value)
+                    except Exception:
+                        lit = Literal(value)
 
-                graph.add((val_node, RDF.value, lit))
-                graph.add((record_uri, ORE.aggregates, val_node))
+                graph.add((record_uri, prop_uri, lit))
 
     return graph
 
