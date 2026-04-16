@@ -4,6 +4,9 @@ from warcio.archiveiterator import ArchiveIterator
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDF, RDFS, XSD
 from urllib.parse import urlparse
+from rdflib.util import from_n3
+from loguru import logger
+from pathlib import Path
 
 # Define namespaces
 DOWARC = Namespace("https://github.com/DOWARC/dowarc#")
@@ -30,16 +33,22 @@ def safe_uri_or_bnode(value: str):
     Prevents rdflib crashes on invalid or unsafe URIs.
     """
     try:
-        parsed = urlparse(value)
-        if not parsed.scheme or not parsed.path:
-            raise ValueError("Invalid URI format")
+        return from_n3(value)
+    except:
+        try:
+            logger.debug(value)
+            parsed = urlparse(value)
+            if not parsed.scheme or not parsed.path:
+                raise ValueError("Invalid URI format")
 
-        uri = URIRef(value)
-        _ = uri.n3()  # Check if rdflib can serialize it
-        return uri
-    except Exception:
-        # Optional: click.echo(f"?? Unsafe URI: {value} ? using BNode", err=True)
-        return BNode()
+            uri = URIRef(value)
+            _ = uri.n3()  # Check if rdflib can serialize it
+            logger.debug(uri)
+            return uri
+        except:
+            # Optional: click.echo(f"?? Unsafe URI: {value} ? using BNode", err=True)
+            logger.debug("BNode")
+            return BNode()
 
 
 @click.command(
