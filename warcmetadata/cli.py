@@ -2,7 +2,7 @@ import click
 import importlib.resources
 from warcio.archiveiterator import ArchiveIterator
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, RDFS, XSD
+from rdflib.namespace import RDF, RDFS, XSD, DCTERMS
 from urllib.parse import urlparse
 from rdflib.util import from_n3
 from loguru import logger
@@ -85,7 +85,8 @@ def extract_metadata(warc_path, output_path, rdf_format):
     """
 
     with open(warc_path, "rb") as stream:
-        graph = extract_metadata_complex(stream, Path(warc_path))
+        # graph = extract_metadata_complex(stream, Path(warc_path))
+        graph = extract_metadata_simple(stream, Path(warc_path))
 
     graph.serialize(destination=output_path, format=rdf_format)
     click.echo(f"Metadata exported to: {output_path} (Format: {rdf_format})")
@@ -136,6 +137,50 @@ def extract_metadata_complex(warc_file_stream, warc_path):
 
     return graph
 
+
+def extract_metadata_simple(warc_file_stream, warc_path):
+    """
+    Extraction of a simplified warc data model
+    """
+    graph = Graph()
+    graph.bind("dowarc", DOWARC)
+    graph.bind("dct", DCTERMS)
+
+    mapping = load_dowarc_mapping()
+
+    file_uri = URIRef(f"https://example.org/{warc_path.name}")
+    graph.add((file_uri, RDF.type, DOWARC.WARCfile))
+
+    for record in ArchiveIterator(warc_file_stream):
+        record_id = record.rec_headers.get("WARC-Record-ID")
+        if not record_id:
+            continue
+
+        record_uri = safe_uri_or_bnode(record_id)
+        graph.add((file_uri, DCTERMS.relation, record_uri))
+        graph.add((record_uri, RDF.type, DOWARC.Record))
+
+        for key, value in record.rec_headers.headers:
+            if key in mapping:
+                prop_uri = mapping[key]
+                val_node = safe_uri_or_bnode(value)
+                label_str = f"{record_id}_{key}"
+
+                graph.add((val_node, RDF.type, prop_uri))
+                graph.add((val_node, RDFS.label, Literal(label_str, lang="en")))
+
+                # Type inference
+                if "Date" in key:
+                    lit = Literal(value, datatype=XSD.dateTime)
+                elif "Length" in key:
+                    lit = Literal(value, datatype=XSD.integer)
+                else:
+                    lit = Literal(value)
+
+                graph.add((val_node, RDF.value, lit))
+                graph.add((record_uri, ORE.aggregates, val_node))
+
+    return graph
 
 
 if __name__ == "__main__":
