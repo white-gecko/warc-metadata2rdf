@@ -83,43 +83,59 @@ def extract_metadata(warc_path, output_path, rdf_format):
     """
     Main CLI entrypoint: reads WARC file, extracts metadata, builds RDF, serializes graph.
     """
+
+    with open(warc_path, "rb") as stream:
+        graph = extract_metadata_complex(stream, Path(warc_path))
+
+    graph.serialize(destination=output_path, format=rdf_format)
+    click.echo(f"Metadata exported to: {output_path} (Format: {rdf_format})")
+
+def extract_metadata_complex(warc_file_stream, warc_path):
+    """
+    Extraction of the original ORE based datamodel
+    """
+
     graph = Graph()
     graph.bind("dowarc", DOWARC)
     graph.bind("ore", ORE)
 
     mapping = load_dowarc_mapping()
 
-    with open(warc_path, "rb") as stream:
-        for record in ArchiveIterator(stream):
-            record_id = record.rec_headers.get("WARC-Record-ID")
-            if not record_id:
-                continue
+    file_uri = URIRef(f"https://example.org/{warc_path.name}")
+    graph.add((file_uri, RDF.type, DOWARC.WARCfile))
 
-            record_uri = safe_uri_or_bnode(record_id)
-            graph.add((record_uri, RDF.type, DOWARC.Record))
+    for record in ArchiveIterator(warc_file_stream):
+        record_id = record.rec_headers.get("WARC-Record-ID")
+        if not record_id:
+            continue
 
-            for key, value in record.rec_headers.headers:
-                if key in mapping:
-                    prop_uri = mapping[key]
-                    val_node = safe_uri_or_bnode(value)
-                    label_str = f"{record_id}_{key}"
+        record_uri = safe_uri_or_bnode(record_id)
+        graph.add((file_uri, ORE.aggregates, record_uri))
+        graph.add((record_uri, ORE.isAggregatedBy, file_uri))
+        graph.add((record_uri, RDF.type, DOWARC.WARCrecord))
 
-                    graph.add((val_node, RDF.type, prop_uri))
-                    graph.add((val_node, RDFS.label, Literal(label_str, lang="en")))
+        for key, value in record.rec_headers.headers:
+            if key in mapping:
+                prop_uri = mapping[key]
+                val_node = safe_uri_or_bnode(value)
+                label_str = f"{record_id}_{key}"
 
-                    # Type inference
-                    if "Date" in key:
-                        lit = Literal(value, datatype=XSD.dateTime)
-                    elif "Length" in key:
-                        lit = Literal(value, datatype=XSD.integer)
-                    else:
-                        lit = Literal(value)
+                graph.add((val_node, RDF.type, prop_uri))
+                graph.add((val_node, RDFS.label, Literal(label_str, lang="en")))
 
-                    graph.add((val_node, RDF.value, lit))
-                    graph.add((record_uri, ORE.aggregates, val_node))
+                # Type inference
+                if "Date" in key:
+                    lit = Literal(value, datatype=XSD.dateTime)
+                elif "Length" in key:
+                    lit = Literal(value, datatype=XSD.integer)
+                else:
+                    lit = Literal(value)
 
-    graph.serialize(destination=output_path, format=rdf_format)
-    click.echo(f"Metadata exported to: {output_path} (Format: {rdf_format})")
+                graph.add((val_node, RDF.value, lit))
+                graph.add((record_uri, ORE.aggregates, val_node))
+
+    return graph
+
 
 
 if __name__ == "__main__":
