@@ -27,6 +27,8 @@ jobs:
           # Add all Containerfiles/Dockerfiles as you need it
           - containerfile: Containerfile
             suffix: ""
+          - containerfile: Containerfile.s3
+            suffix: "-s3"
 
     permissions:
       contents: read

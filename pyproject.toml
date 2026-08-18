@@ -24,3 +24,9 @@ warc2rdf = "warcmetadata.cli:extract_metadata"
 dev = [
     "ruff (>=0.16.3,<0.17.0)"
 ]
+s3 = [
+    "s3fs (>=2026.7.0,<2027.0.0)"
+]
+
+[tool.poetry.group.s3]
+optional = true
