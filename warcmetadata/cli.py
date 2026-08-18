@@ -39,7 +39,7 @@ DOWARC_PROFILES = {
     "--format",
     "-f",
     "rdf_format",
-    default="xml",
+    default="turtle",
     show_default=True,
     type=click.Choice(["xml", "turtle", "nt", "n3"], case_sensitive=False),
     help="Optional RDF serialization format.",
