@@ -67,7 +67,7 @@ def extract_metadata(warc_path_str, output_path, rdf_format, profile, warc_file_
 
     warc_file_iri = URIRef(warc_file_iri_str or f"https://example.org/{warc_path.name}")
     with open(warc_path, "rb") as stream:
-        graph = DOWARC_PROFILES[profile](stream, warc_path, warc_file_iri)
+        graph = DOWARC_PROFILES[profile](stream, warc_file_iri)
 
     graph.serialize(destination=output_path, format=rdf_format)
     click.echo(f"Metadata exported to: {output_path} (Format: {rdf_format})")

@@ -48,7 +48,7 @@ def safe_uri_or_bnode(value: str):
             logger.debug("BNode")
             return BNode()
 
-def extract_metadata_complex(warc_file_stream, warc_path, warc_file_iri):
+def extract_metadata_complex(warc_file_stream, warc_file_iri):
     """
     Extraction of the original ORE based datamodel
     """
@@ -59,7 +59,6 @@ def extract_metadata_complex(warc_file_stream, warc_path, warc_file_iri):
 
     mapping = load_dowarc_mapping()
 
-    warc_file_iri = URIRef(f"https://example.org/{warc_path.name}")
     graph.add((warc_file_iri, RDF.type, DOWARC.WARCfile))
 
     for record in ArchiveIterator(warc_file_stream):
@@ -95,7 +94,7 @@ def extract_metadata_complex(warc_file_stream, warc_path, warc_file_iri):
     return graph
 
 
-def extract_metadata_simple(warc_file_stream, warc_path, warc_file_iri):
+def extract_metadata_simple(warc_file_stream, warc_file_iri):
     """
     Extraction of a simplified warc data model
     """
