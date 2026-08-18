@@ -129,12 +129,13 @@ def extract_metadata_simple(warc_file_stream, warc_path, warc_file_iri):
                     lit = Literal(value)
                 elif "Target-URI" in key:
                     lit = URIRef(value)
-                else:
-                    logger.debug(value)
+                elif value[0] in ["\"", "<"]:
                     try:
                         lit = from_n3(value)
                     except Exception:
                         lit = Literal(value)
+                else:
+                    lit = Literal(value)
 
                 graph.add((record_uri, prop_uri, lit))
 
