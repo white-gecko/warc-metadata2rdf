@@ -19,3 +19,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 warc2rdf = "warcmetadata.cli:extract_metadata"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.3,<0.17.0)"
+]
