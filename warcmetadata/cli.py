@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import click
 from rdflib import Namespace
-from pathlib import Path
+
 from .extraction import extract_metadata_complex, extract_metadata_simple
 
 # Define namespaces

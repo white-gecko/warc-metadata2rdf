@@ -1,10 +1,11 @@
 import importlib.resources
-from warcio.archiveiterator import ArchiveIterator
-from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, RDFS, XSD, DCTERMS
 from urllib.parse import urlparse
-from rdflib.util import from_n3
+
 from loguru import logger
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import DCTERMS, RDF, RDFS, XSD
+from rdflib.util import from_n3
+from warcio.archiveiterator import ArchiveIterator
 
 # Define namespaces
 DOWARC = Namespace("https://github.com/DOWARC/dowarc#")
