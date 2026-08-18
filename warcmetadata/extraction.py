@@ -48,7 +48,7 @@ def safe_uri_or_bnode(value: str):
             logger.debug("BNode")
             return BNode()
 
-def extract_metadata_complex(warc_file_stream, warc_path):
+def extract_metadata_complex(warc_file_stream, warc_path, warc_file_iri):
     """
     Extraction of the original ORE based datamodel
     """
@@ -59,8 +59,8 @@ def extract_metadata_complex(warc_file_stream, warc_path):
 
     mapping = load_dowarc_mapping()
 
-    file_uri = URIRef(f"https://example.org/{warc_path.name}")
-    graph.add((file_uri, RDF.type, DOWARC.WARCfile))
+    warc_file_iri = URIRef(f"https://example.org/{warc_path.name}")
+    graph.add((warc_file_iri, RDF.type, DOWARC.WARCfile))
 
     for record in ArchiveIterator(warc_file_stream):
         record_id = record.rec_headers.get("WARC-Record-ID")
@@ -68,8 +68,8 @@ def extract_metadata_complex(warc_file_stream, warc_path):
             continue
 
         record_uri = safe_uri_or_bnode(record_id)
-        graph.add((file_uri, ORE.aggregates, record_uri))
-        graph.add((record_uri, ORE.isAggregatedBy, file_uri))
+        graph.add((warc_file_iri, ORE.aggregates, record_uri))
+        graph.add((record_uri, ORE.isAggregatedBy, warc_file_iri))
         graph.add((record_uri, RDF.type, DOWARC.WARCrecord))
 
         for key, value in record.rec_headers.headers:
@@ -95,7 +95,7 @@ def extract_metadata_complex(warc_file_stream, warc_path):
     return graph
 
 
-def extract_metadata_simple(warc_file_stream, warc_path):
+def extract_metadata_simple(warc_file_stream, warc_path, warc_file_iri):
     """
     Extraction of a simplified warc data model
     """
@@ -105,8 +105,7 @@ def extract_metadata_simple(warc_file_stream, warc_path):
 
     mapping = load_dowarc_mapping()
 
-    file_uri = URIRef(f"https://example.org/{warc_path.name}")
-    graph.add((file_uri, RDF.type, DOWARC.WARCfile))
+    graph.add((warc_file_iri, RDF.type, DOWARC.WARCfile))
 
     for record in ArchiveIterator(warc_file_stream):
         record_id = record.rec_headers.get("WARC-Record-ID")
@@ -114,7 +113,7 @@ def extract_metadata_simple(warc_file_stream, warc_path):
             continue
 
         record_uri = safe_uri_or_bnode(record_id)
-        graph.add((file_uri, DCTERMS.relation, record_uri))
+        graph.add((warc_file_iri, DCTERMS.relation, record_uri))
         graph.add((record_uri, RDF.type, DOWARC.WARCrecord))
 
         for key, value in record.rec_headers.headers:
