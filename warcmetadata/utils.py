@@ -28,12 +28,13 @@ def get_seed_record(graph: Graph, **kwargs):
     graph_result = graph.query("""
     prefix dowarc: <https://github.com/DOWARC/dowarc#>
     construct {
-        ?warcfile dct:relation ?request, ?response; a dowarc:WARCfile .
+        ?warcfile dct:relation ?warcinfo, ?request, ?response; a dowarc:WARCfile .
         ?request dowarc:WARC-Date ?date ;
                 dowarc:WARC-Target-URI ?seedUrl ;
                 dowarc:WARC-Concurrent-To ?response ;
                 ?req_p ?req_o .
         ?response ?res_p ?res_o .
+        ?warcinfo ?info_p ?info_o .
     } where {
         """ + query_bindings_str + """
         ?warcfile a dowarc:WARCfile ;
@@ -47,6 +48,10 @@ def get_seed_record(graph: Graph, **kwargs):
             optional {
                 ?warcfile dct:relation ?response .
             }
+        }
+        optional {
+            ?request dowarc:WARC-Warcinfo-ID ?warcinfo .
+            ?warcinfo ?info_p ?info_o .
         }
     }
     """)
